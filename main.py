@@ -59,9 +59,9 @@ class InterfaceGame:
         return result + 1 if result != -1 else -1
 
     def choose_difficulty(self):
-        difficulty_types = ('easy', 'medium', 'difficult')
+        difficulty_types = ('easy', 'medium', 'hard')
         result = self.choose_parameters(difficulty_types)
-        return result + 3 if result != -1 else -1
+        return result + 4 if result != -1 else -1
 
     def play(self):
         running = True

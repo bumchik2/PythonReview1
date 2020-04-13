@@ -3,7 +3,6 @@ import draught
 
 class ChessBoard:
     def __init__(self, size=8, rows_filled=3):
-        self.rows_filled = rows_filled
         self.field = []
         for row in range(size):
             self.field.append([])

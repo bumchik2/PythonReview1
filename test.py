@@ -2,6 +2,7 @@ import draught
 import chessboard
 import game
 import numpy
+from datetime import datetime
 
 
 def print_field(field):
@@ -146,10 +147,38 @@ def test_multiple_complex_eating():
     print('test \'multiple complex eating\' passed')
 
 
+def test_time(func):
+    def wrapper():
+        start_time = datetime.now()
+        func()
+        print(func.__name__, ' is ', datetime.now() - start_time)
+
+    return wrapper
+
+
+@test_time
+def first_step_time():
+    difficulty = 5
+    new_chessboard = chessboard.ChessBoard()
+    new_game = game.Game(new_chessboard, difficulty=difficulty)
+    new_game.make_step_ai(())
+
+
+def hard_game_time():
+    start_time = datetime.now()
+    difficulty = 5
+    new_chessboard = chessboard.ChessBoard()
+    new_game = game.Game(new_chessboard, difficulty=difficulty)
+    new_game.play()
+    print('average step time is: ', (datetime.now() - start_time) / new_game.ai_step_number)
+
+
 def run_tests():
     test_simple_eating()
     test_try_not_to_die()
     test_eat_two_not_one()
     test_long_eating()
     test_multiple_complex_eating()
+    first_step_time()
+    hard_game_time()
     print('all tests passed!')

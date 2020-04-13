@@ -10,6 +10,10 @@ def get_dirs(start: tuple, finish: tuple) -> tuple:
     return dir_x, dir_y
 
 
+def is_valid_position(pos: tuple, board_size: int) -> bool:
+    return 0 <= pos[0] < board_size and 0 <= pos[1] < board_size
+
+
 class Draught:
     def __init__(self, color_type: str, is_king=False):
         self.color_type = color_type
@@ -48,6 +52,8 @@ class Draught:
         if abs(start[0] - finish[0]) != abs(start[1] - finish[1]):
             return False
         if not self.is_king:
+            if abs(start[0] - finish[0]) > 2:
+                return False
             if abs(start[0] - finish[0]) == 2:
                 return self.eats_one_enemy(start, finish, field)
             if self.color_type == 'white':
@@ -85,7 +91,17 @@ class Draught:
         return tuple(result)
 
     def can_eat(self, start: tuple, field: list) -> bool:
-        return self.get_valid_eating_steps(start, field) != ()
+        if not self.is_king:
+            for delta_x in range(-1, 2, 2):
+                for delta_y in range(-1, 2, 2):
+                    if is_valid_position((start[0] + 2 * delta_x, start[1] + 2 * delta_y), len(field)):
+                        if field[start[0] + 2 * delta_x][start[1] + 2 * delta_y] is None and \
+                                field[start[0] + delta_x][start[1] + delta_y] is not None and \
+                                field[start[0] + delta_x][start[1] + delta_y].color_type != self.color_type:
+                            return True
+            return False
+        else:
+            return self.get_valid_eating_steps(start, field) != ()
 
     def get_score(self):
         return 3 if self.is_king else 1

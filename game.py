@@ -53,6 +53,10 @@ class Game:
             raise Exception('unknown game mode')
         self.difficulty = difficulty
 
+        # we store number of steps, made by ai
+        # to calculate average step time
+        self.ai_step_number = 0
+
     def draw_field(self):
         offset_x = - self.chessboard_picture_size * 20 // 512
         offset_y = - self.chessboard_picture_size * 10 // 512
@@ -222,6 +226,7 @@ class Game:
         else:
             self.change_current_player()
         self.players = players_copy
+        self.ai_step_number += 1
 
     def save_game(self):
         data_to_save = {
@@ -255,7 +260,43 @@ class Game:
                 loaded_data = pickle.load(load_file)
                 self.copy_loaded_data(loaded_data)
 
+    def get_game_over_message(self):
+        white_draughts_exist = False
+        black_draughts_exits = False
+        for i in range(len(self.field)):
+            for j in range(len(self.field)):
+                if self.field[i][j] is not None:
+                    if self.field[i][j].color_type == 'white':
+                        white_draughts_exist = True
+                    else:
+                        black_draughts_exits = True
+        if white_draughts_exist and black_draughts_exits:
+            return 'Draw!'
+        else:
+            return 'White side wins!' if white_draughts_exist else 'Black side wins!'
+
+    def draw_game_over_message(self):
+        hint = ' Press LMB to continue.'
+        game_over_message = self.get_game_over_message()
+        game_over_message += hint
+        font_obj = pygame.font.SysFont('Arial', 30)
+        text_surface_obj = font_obj.render(game_over_message, True, GRAY, GREEN)
+        text_rect_obj = text_surface_obj.get_rect()
+        text_rect_obj.center = (self.chessboard_picture_size // 2, self.chessboard_picture_size // 2)
+        self.screen.blit(text_surface_obj, text_rect_obj)
+
+    def game_over(self):
+        self.draw_field()
+        self.draw_game_over_message()
+        pygame.display.flip()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONUP:
+                    running = False
+
     def play(self):
+        pygame.init()
         running = True
         while running:
             for event in pygame.event.get():
@@ -282,3 +323,4 @@ class Game:
 
             self.draw_field()
             pygame.display.flip()
+        self.game_over()
