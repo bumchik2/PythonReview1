@@ -157,7 +157,7 @@ def test_time(func):
 
 
 @test_time
-def first_step_time():
+def first_hard_step_time():
     difficulty = 5
     new_chessboard = chessboard.ChessBoard()
     new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=True)
@@ -170,7 +170,7 @@ def hard_step_time(test_mode: bool):
     new_chessboard = chessboard.ChessBoard()
     new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=test_mode)
     new_game.play()
-    print('average step time is: ', (datetime.now() - start_time) / new_game.ai_step_number)
+    print('average hard step time is: ', (datetime.now() - start_time) / new_game.ai_step_number)
 
 
 def run_tests(test_mode=True):
@@ -179,7 +179,7 @@ def run_tests(test_mode=True):
     test_eat_two_not_one()
     test_long_eating()
     test_multiple_complex_eating()
-    first_step_time()
+    first_hard_step_time()
     hard_step_time(test_mode)
     print('all tests passed!')
 
