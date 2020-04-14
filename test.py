@@ -21,7 +21,7 @@ def print_field(field):
 def general_test(field1, field2):
     chess_board = chessboard.ChessBoard()
     chess_board.field = field1
-    test_game = game.Game(chess_board)
+    test_game = game.Game(chess_board, test_mode=True)
     test_game.make_step_ai(())
     numpy.testing.assert_equal(test_game.field, field2)
 
@@ -148,9 +148,9 @@ def test_multiple_complex_eating():
 
 
 def test_time(func):
-    def wrapper():
+    def wrapper(*args, **kwargs):
         start_time = datetime.now()
-        func()
+        func(*args, **kwargs)
         print(func.__name__, ' is ', datetime.now() - start_time)
 
     return wrapper
@@ -160,29 +160,29 @@ def test_time(func):
 def first_step_time():
     difficulty = 5
     new_chessboard = chessboard.ChessBoard()
-    new_game = game.Game(new_chessboard, difficulty=difficulty)
+    new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=True)
     new_game.make_step_ai(())
 
 
-def hard_game_time():
+def hard_step_time(test_mode: bool):
     start_time = datetime.now()
     difficulty = 5
     new_chessboard = chessboard.ChessBoard()
-    new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=True)
+    new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=test_mode)
     new_game.play()
     print('average step time is: ', (datetime.now() - start_time) / new_game.ai_step_number)
 
 
-def run_tests():
+def run_tests(test_mode=True):
     test_simple_eating()
     test_try_not_to_die()
     test_eat_two_not_one()
     test_long_eating()
     test_multiple_complex_eating()
     first_step_time()
-    hard_game_time()
+    hard_step_time(test_mode)
     print('all tests passed!')
 
 
 if __name__ == '__main__':
-    run_tests()
+    run_tests(True)

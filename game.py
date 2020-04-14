@@ -24,13 +24,13 @@ class Game:
         self.chess_board = chess_board
         self.field = chess_board.field
 
-        self.chessboard_picture_size = 512
-        self.cell_size = int(self.chessboard_picture_size / len(self.field))
-        self.screen: pygame.Surface = pygame.display.set_mode((self.chessboard_picture_size,
-                                                               self.chessboard_picture_size))
-
-        self.crown = pygame.image.load("Pictures/Crown.png").convert_alpha()
-        self.scaled_crown = pygame.transform.scale(self.crown,
+        if not test_mode:
+            self.chessboard_picture_size = 512
+            self.cell_size = int(self.chessboard_picture_size / len(self.field))
+            self.screen: pygame.Surface = pygame.display.set_mode((self.chessboard_picture_size,
+                                                                   self.chessboard_picture_size))
+            self.crown = pygame.image.load("Pictures/Crown.png").convert_alpha()
+            self.scaled_crown = pygame.transform.scale(self.crown,
                                                    (40 * self.chessboard_picture_size // 512,
                                                     22 * self.chessboard_picture_size // 512))
         # initializing game variables
@@ -297,19 +297,22 @@ class Game:
                     running = False
 
     def play(self):
-        pygame.init()
+        if not self.test_mode:
+            pygame.init()
+
         running = True
         while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.MOUSEBUTTONUP:
-                    self.last_mouse_pos = pygame.mouse.get_pos()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_s:
-                        self.save_game()
-                    elif event.key == pygame.K_l:
-                        self.load_game()
+            if not self.test_mode:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                    elif event.type == pygame.MOUSEBUTTONUP:
+                        self.last_mouse_pos = pygame.mouse.get_pos()
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_s:
+                            self.save_game()
+                        elif event.key == pygame.K_l:
+                            self.load_game()
 
             player_number = 0 if self.current_player_color_type == 'white' else 1
             if self.players[player_number] == 'player':
@@ -321,7 +324,10 @@ class Game:
 
             if self.get_possible_steps() == ():
                 running = False
-            self.draw_field()
-            pygame.display.flip()
+
+            if not self.test_mode:
+                self.draw_field()
+                pygame.display.flip()
+
         if not self.test_mode:
             self.game_over()
