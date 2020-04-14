@@ -20,7 +20,7 @@ def get_coordinates(index: int, cell_size: int) -> int:
 
 class Game:
 
-    def __init__(self, chess_board=chessboard.ChessBoard(), game_mode=1, difficulty=4):
+    def __init__(self, chess_board=chessboard.ChessBoard(), game_mode=1, difficulty=4, test_mode=False):
         self.chess_board = chess_board
         self.field = chess_board.field
 
@@ -52,6 +52,7 @@ class Game:
         else:
             raise Exception('unknown game mode')
         self.difficulty = difficulty
+        self.test_mode = test_mode
 
         # we store number of steps, made by ai
         # to calculate average step time
@@ -320,7 +321,7 @@ class Game:
 
             if self.get_possible_steps() == ():
                 running = False
-
             self.draw_field()
             pygame.display.flip()
-        self.game_over()
+        if not self.test_mode:
+            self.game_over()

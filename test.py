@@ -168,7 +168,7 @@ def hard_game_time():
     start_time = datetime.now()
     difficulty = 5
     new_chessboard = chessboard.ChessBoard()
-    new_game = game.Game(new_chessboard, difficulty=difficulty)
+    new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=True)
     new_game.play()
     print('average step time is: ', (datetime.now() - start_time) / new_game.ai_step_number)
 
@@ -182,3 +182,7 @@ def run_tests():
     first_step_time()
     hard_game_time()
     print('all tests passed!')
+
+
+if __name__ == '__main__':
+    run_tests()
