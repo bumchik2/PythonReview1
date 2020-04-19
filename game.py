@@ -4,6 +4,7 @@ import pygame
 import copy
 import pickle
 import os
+from enum import Enum
 
 GRAY = (105, 105, 105)
 GREEN = (0, 200, 64)
@@ -18,8 +19,12 @@ def get_coordinates(index: int, cell_size: int) -> int:
     return int(cell_size * (index + 1 / 2))
 
 
-class Game:
+class State(Enum):
+    CHOOSING_DRAUGHT = 1
+    CHOOSING_TARGET = 2
 
+
+class Game:
     def __init__(self, chess_board=chessboard.ChessBoard(), game_mode=1, difficulty=4, test_mode=False):
         self.chess_board = chess_board
         self.field = chess_board.field
@@ -31,15 +36,15 @@ class Game:
                                                                    self.chessboard_picture_size))
             self.crown = pygame.image.load("Pictures/Crown.png").convert_alpha()
             self.scaled_crown = pygame.transform.scale(self.crown,
-                                                   (40 * self.chessboard_picture_size // 512,
-                                                    22 * self.chessboard_picture_size // 512))
+                                                       (40 * self.chessboard_picture_size // 512,
+                                                        22 * self.chessboard_picture_size // 512))
         # initializing game variables
         self.last_mouse_pos = None
         self.chosen_draught = None
         self.chosen_draught_position = None
         self.chosen_target_position = None
         self.can_change_draught = True
-        self.current_state = 'CHOOSING_DRAUGHT'
+        self.current_state = State.CHOOSING_DRAUGHT
         self.current_player_color_type = 'white'
 
         self.game_mode = game_mode
@@ -96,7 +101,7 @@ class Game:
     def change_current_player(self):
         self.current_player_color_type = 'black' if self.current_player_color_type == 'white' else 'white'
         self.set_choices_none()
-        self.current_state = 'CHOOSING_DRAUGHT'
+        self.current_state = State.CHOOSING_DRAUGHT
 
     def player_choose_draught(self):
         if self.last_mouse_pos is not None:
@@ -106,7 +111,7 @@ class Game:
             if self.chosen_draught is not None and self.chosen_draught.color_type == self.current_player_color_type:
                 if not self.eating_draught_exists() or \
                         self.chosen_draught.can_eat(self.chosen_draught_position, self.field):
-                    self.current_state = 'CHOOSING_TARGET'
+                    self.current_state = State.CHOOSING_TARGET
             else:
                 self.set_choices_none()
 
@@ -126,7 +131,7 @@ class Game:
                 if self.can_change_draught:
                     self.chosen_draught = None
                     self.chosen_draught_position = None
-                    self.current_state = 'CHOOSING_DRAUGHT'
+                    self.current_state = State.CHOOSING_DRAUGHT
             else:
                 draught.move_draught(self.chosen_draught_position, self.chosen_target_position, self.field)
                 if just_ate_someone and self.chosen_draught.can_eat(self.chosen_target_position, self.field):
@@ -136,9 +141,9 @@ class Game:
                     self.change_current_player()
 
     def make_step_player(self):
-        if self.current_state == 'CHOOSING_DRAUGHT':
+        if self.current_state == State.CHOOSING_DRAUGHT:
             self.player_choose_draught()
-        elif self.current_state == 'CHOOSING_TARGET':
+        elif self.current_state == State.CHOOSING_TARGET:
             self.player_choose_target()
         else:
             raise Exception('unknown state')
@@ -186,7 +191,7 @@ class Game:
             # saving current field condition
             dr_copy = copy.deepcopy(self.field[step[0][0]][step[0][1]])
             dr_to_eat_pos = draught.draught_pos_to_eat(step[0], step[1], self.field)
-            eaten_dr_copy = None if dr_to_eat_pos == () else copy.deepcopy(
+            eaten_dr_copy = None if dr_to_eat_pos is None else copy.deepcopy(
                 self.field[dr_to_eat_pos[0]][dr_to_eat_pos[1]])
 
             one_more_step = self.field[step[0][0]][step[0][1]].eats_one_enemy(step[0], step[1], self.field)
@@ -206,7 +211,7 @@ class Game:
             # recovering field condition
             self.field[step[0][0]][step[0][1]] = dr_copy
             self.field[step[1][0]][step[1][1]] = None
-            if dr_to_eat_pos != ():
+            if dr_to_eat_pos is not None:
                 self.field[dr_to_eat_pos[0]][dr_to_eat_pos[1]] = eaten_dr_copy
 
         return best_step_so_far
@@ -242,7 +247,7 @@ class Game:
             'game_mode': self.game_mode
         }
         with open('Game data/save.txt', 'wb') as save_file:
-            pickle.dump(copy.deepcopy(data_to_save), save_file)
+            pickle.dump(data_to_save, save_file)
 
     def copy_loaded_data(self, loaded_data):
         self.field = loaded_data['field']

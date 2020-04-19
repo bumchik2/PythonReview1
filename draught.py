@@ -1,8 +1,14 @@
+from typing import NamedTuple
+
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 
-def get_dirs(start: tuple, finish: tuple) -> tuple:
+Pos = NamedTuple("Pos", (('x', int), ('y', int)))
+
+
+def get_dirs(start: Pos, finish: Pos) -> Pos:
     dir_x = finish[0] - start[0]
     dir_x //= abs(dir_x)
     dir_y = finish[1] - start[1]
@@ -10,7 +16,7 @@ def get_dirs(start: tuple, finish: tuple) -> tuple:
     return dir_x, dir_y
 
 
-def is_valid_position(pos: tuple, board_size: int) -> bool:
+def is_valid_position(pos: Pos, board_size: int) -> bool:
     return 0 <= pos[0] < board_size and 0 <= pos[1] < board_size
 
 
@@ -25,7 +31,7 @@ class Draught:
             return (self.color_type == other.color_type and
                     self.is_king == other.is_king)
 
-    def enemies_on_the_way(self, start: tuple, finish: tuple, field: list) -> int:
+    def enemies_on_the_way(self, start: Pos, finish: Pos, field) -> int:
         dir_x, dir_y = get_dirs(start, finish)
         pos = list(start)
         enemies = 0
@@ -39,14 +45,14 @@ class Draught:
                     enemies += 1
         return enemies
 
-    def eats_one_enemy(self, start: tuple, finish: tuple, field: list) -> bool:
+    def eats_one_enemy(self, start: Pos, finish: Pos, field: list) -> bool:
         if abs(finish[0] - start[0]) != abs(finish[1] - start[1]):
             return False
         if field[finish[0]][finish[1]] is not None:
             return False
         return self.enemies_on_the_way(start, finish, field) == 1
 
-    def is_valid_step(self, start: tuple, finish: tuple, field: list):
+    def is_valid_step(self, start: Pos, finish: Pos, field):
         if field[finish[0]][finish[1]] is not None:
             return False
         if abs(start[0] - finish[0]) != abs(start[1] - finish[1]):
@@ -69,10 +75,10 @@ class Draught:
             return self.eats_one_enemy(start, finish, field) or \
                    self.enemies_on_the_way(start, finish, field) == 0
 
-    def is_valid_eating_step(self, start: tuple, finish: tuple, field: list):
+    def is_valid_eating_step(self, start: Pos, finish: Pos, field: list):
         return self.is_valid_step(start, finish, field) & self.eats_one_enemy(start, finish, field)
 
-    def get_valid_steps(self, start: tuple, field: list) -> tuple:
+    def get_valid_steps(self, start: Pos, field) -> tuple:
         result = []
         for i in range(len(field)):
             j = start[1] + (start[0] - i)
@@ -83,17 +89,17 @@ class Draught:
                 result.append((i, j))
         return tuple(result)
 
-    def get_valid_eating_steps(self, start: tuple, field: list) -> tuple:
+    def get_valid_eating_steps(self, start: Pos, field) -> tuple:
         result = []
         for finish in self.get_valid_steps(start, field):
             if self.eats_one_enemy(start, finish, field):
                 result.append(finish)
         return tuple(result)
 
-    def can_eat(self, start: tuple, field: list) -> bool:
+    def can_eat(self, start: Pos, field) -> bool:
         if not self.is_king:
-            for delta_x in range(-1, 2, 2):
-                for delta_y in range(-1, 2, 2):
+            for delta_x in (-1, 1):
+                for delta_y in (-1, 1):
                     if is_valid_position((start[0] + 2 * delta_x, start[1] + 2 * delta_y), len(field)):
                         if field[start[0] + 2 * delta_x][start[1] + 2 * delta_y] is None and \
                                 field[start[0] + delta_x][start[1] + delta_y] is not None and \
@@ -107,7 +113,7 @@ class Draught:
         return 3 if self.is_king else 1
 
 
-def draught_pos_to_eat(start: tuple, finish: tuple, field: list) -> tuple:
+def draught_pos_to_eat(start: Pos, finish: Pos, field):
     dir_x, dir_y = get_dirs(start, finish)
     pos = list(start)
     while pos != list(finish):
@@ -115,16 +121,16 @@ def draught_pos_to_eat(start: tuple, finish: tuple, field: list) -> tuple:
         pos[1] += dir_y
         if field[pos[0]][pos[1]] is not None:
             return pos[0], pos[1]
-    return ()
+    return None
 
 
-def eat_draught(start: tuple, finish: tuple, field: list):
+def eat_draught(start: Pos, finish: Pos, field):
     dr_pos = draught_pos_to_eat(start, finish, field)
-    if dr_pos != ():
+    if dr_pos is not None:
         field[dr_pos[0]][dr_pos[1]] = None
 
 
-def move_draught(start: tuple, finish: tuple, field: list):
+def move_draught(start: Pos, finish: Pos, field):
     eat_draught(start, finish, field)
     start_draught = field[start[0]][start[1]]
     if start_draught.color_type == 'white' and finish[0] == 0:

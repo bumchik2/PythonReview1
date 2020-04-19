@@ -166,7 +166,7 @@ def first_hard_step_time():
 
 def hard_step_time(test_mode: bool):
     start_time = datetime.now()
-    difficulty = 5
+    difficulty = 4
     new_chessboard = chessboard.ChessBoard()
     new_game = game.Game(new_chessboard, difficulty=difficulty, test_mode=test_mode)
     new_game.play()
