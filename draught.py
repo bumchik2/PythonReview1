@@ -1,8 +1,5 @@
 from typing import NamedTuple
-
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
+from enum import Enum
 
 
 Pos = NamedTuple("Pos", (('x', int), ('y', int)))
@@ -20,16 +17,29 @@ def is_valid_position(pos: Pos, board_size: int) -> bool:
     return 0 <= pos[0] < board_size and 0 <= pos[1] < board_size
 
 
+class ColorType(Enum):
+    WHITE = 1
+    BLACK = 2
+
+
 class Draught:
-    def __init__(self, color_type: str, is_king=False):
-        self.color_type = color_type
+    def __init__(self, is_white: bool, is_king=False):
+        self.is_white = is_white
         self.is_king = is_king
-        self.color = WHITE if color_type == 'white' else BLACK
+
+    def get_color_type(self):
+        return ColorType.WHITE if self.is_white else ColorType.BLACK
+
+    def set_color_type(self, new_color_type: ColorType):
+        self.is_white = True if new_color_type == ColorType.WHITE else False
+
+    color_type = property(fget=get_color_type, fset=set_color_type)
 
     def __eq__(self, other):
         if isinstance(other, Draught):
             return (self.color_type == other.color_type and
                     self.is_king == other.is_king)
+        return False
 
     def enemies_on_the_way(self, start: Pos, finish: Pos, field) -> int:
         dir_x, dir_y = get_dirs(start, finish)
@@ -62,10 +72,10 @@ class Draught:
                 return False
             if abs(start[0] - finish[0]) == 2:
                 return self.eats_one_enemy(start, finish, field)
-            if self.color_type == 'white':
+            if self.color_type == ColorType.WHITE:
                 if start[0] <= finish[0]:
                     return False
-            if self.color_type == 'black':
+            if self.color_type == ColorType.BLACK:
                 if start[0] >= finish[0]:
                     return False
             if abs(start[0] - finish[0]) == 1:
@@ -133,9 +143,9 @@ def eat_draught(start: Pos, finish: Pos, field):
 def move_draught(start: Pos, finish: Pos, field):
     eat_draught(start, finish, field)
     start_draught = field[start[0]][start[1]]
-    if start_draught.color_type == 'white' and finish[0] == 0:
+    if start_draught.color_type == ColorType.WHITE and finish[0] == 0:
         start_draught.is_king = True
-    if start_draught.color_type == 'black' and finish[0] == len(field) - 1:
+    if start_draught.color_type == ColorType.BLACK and finish[0] == len(field) - 1:
         start_draught.is_king = True
     field[start[0]][start[1]] = None
     field[finish[0]][finish[1]] = start_draught

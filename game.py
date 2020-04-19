@@ -5,17 +5,25 @@ import copy
 import pickle
 import os
 from enum import Enum
+from draught import ColorType
 
 GRAY = (105, 105, 105)
 GREEN = (0, 200, 64)
 WHITE_GRAY = (215, 215, 215)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+
+class PlayerType(Enum):
+    Player = 1
+    AI = 2
 
 
 def get_indexes(pos: tuple, cell_size: int) -> tuple:
     return pos[1] // cell_size, pos[0] // cell_size
 
 
-def get_coordinates(index: int, cell_size: int) -> int:
+def get_coordinate(index: int, cell_size: int) -> int:
     return int(cell_size * (index + 1 / 2))
 
 
@@ -45,15 +53,15 @@ class Game:
         self.chosen_target_position = None
         self.can_change_draught = True
         self.current_state = State.CHOOSING_DRAUGHT
-        self.current_player_color_type = 'white'
+        self.current_player_color_type = ColorType.WHITE
 
         self.game_mode = game_mode
         if game_mode == 1:
-            self.players = ['AI', 'AI']
+            self.players = [PlayerType.AI, PlayerType.AI]
         elif game_mode == 2:
-            self.players = ['player', 'AI']
+            self.players = [PlayerType.Player, PlayerType.AI]
         elif game_mode == 3:
-            self.players = ['player', 'player']
+            self.players = [PlayerType.Player, PlayerType.Player]
         else:
             raise Exception('unknown game mode')
         self.difficulty = difficulty
@@ -77,9 +85,9 @@ class Game:
                     pygame.draw.rect(self.screen, GREEN,
                                      (j * self.cell_size, i * self.cell_size, self.cell_size, self.cell_size))
                 if self.field[i][j] is not None:
-                    pos_x = get_coordinates(j, self.cell_size)
-                    pos_y = get_coordinates(i, self.cell_size)
-                    color = self.field[i][j].color
+                    pos_x = get_coordinate(j, self.cell_size)
+                    pos_y = get_coordinate(i, self.cell_size)
+                    color = WHITE if self.field[i][j].is_white else BLACK
                     pygame.draw.circle(self.screen, color, (pos_x, pos_y), int(self.cell_size / 2))
                     if self.field[i][j].is_king:
                         self.screen.blit(self.scaled_crown, (pos_x + offset_x, pos_y + offset_y))
@@ -99,7 +107,8 @@ class Game:
         return False
 
     def change_current_player(self):
-        self.current_player_color_type = 'black' if self.current_player_color_type == 'white' else 'white'
+        self.current_player_color_type = ColorType.BLACK if \
+            self.current_player_color_type == ColorType.WHITE else ColorType.WHITE
         self.set_choices_none()
         self.current_state = State.CHOOSING_DRAUGHT
 
@@ -173,7 +182,7 @@ class Game:
                         result.append(((i, j), finish))
         return tuple(result)
 
-    def best_step(self, depth: int, starting_pos: tuple) -> tuple:
+    def best_step(self, depth: int, starting_pos: draught.Pos) -> draught.Pos:
         if depth == 0:
             return None, None, self.score()
         if starting_pos != ():
@@ -216,12 +225,12 @@ class Game:
 
         return best_step_so_far
 
-    def make_step_ai(self, starting_pos: tuple):
+    def make_step_ai(self, starting_pos: draught.Pos):
         if self.get_possible_steps() == ():
             print('Game Over!')
             return
         players_copy = self.players.copy()
-        self.players = ['AI', 'AI']
+        self.players = [PlayerType.AI, PlayerType.AI]
         start_finish_score = self.best_step(self.difficulty, starting_pos)
         one_eaten = self.field[start_finish_score[0][0]][start_finish_score[0][1]].eats_one_enemy(
             start_finish_score[0], start_finish_score[1], self.field)
@@ -272,7 +281,7 @@ class Game:
         for i in range(len(self.field)):
             for j in range(len(self.field)):
                 if self.field[i][j] is not None:
-                    if self.field[i][j].color_type == 'white':
+                    if self.field[i][j].color_type == draught.ColorType.WHITE:
                         white_draughts_exist = True
                     else:
                         black_draughts_exits = True
@@ -319,10 +328,10 @@ class Game:
                         elif event.key == pygame.K_l:
                             self.load_game()
 
-            player_number = 0 if self.current_player_color_type == 'white' else 1
-            if self.players[player_number] == 'player':
+            player_number = 0 if self.current_player_color_type == ColorType.WHITE else 1
+            if self.players[player_number] == PlayerType.Player:
                 self.make_step_player()
-            elif self.players[player_number] == 'AI':
+            elif self.players[player_number] == PlayerType.AI:
                 self.make_step_ai(())
             else:
                 raise Exception('unknown player')
