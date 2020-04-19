@@ -50,9 +50,10 @@ coverage.xml
 # Django stuff:
 *.log
 
-desktop.ini
 # Sphinx documentation
 docs/_build/
 
 # PyBuilder
 target/
+
+Music/desktop.ini
