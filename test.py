@@ -6,13 +6,13 @@ from datetime import datetime
 from draught import Draught
 
 
-def print_field(field):
-    for i in range(len(field)):
-        for j in range(len(field[0])):
-            if field[i][j] is None:
+def print_field(chess_board):
+    for i, row in enumerate(chess_board):
+        for j, dr in enumerate(row):
+            if chess_board[i][j] is None:
                 print('-', end=' ')
             else:
-                if field[i][j].color_type == draught.ColorType.WHITE:
+                if chess_board[i][j].color_type == draught.ColorType.WHITE:
                     print('w', end=' ')
                 else:
                     print('b', end=' ')
@@ -24,7 +24,7 @@ def general_test(field1, field2):
     chess_board.field = field1
     test_game = game.Game(chess_board, test_mode=True)
     test_game.make_step_ai(())
-    numpy.testing.assert_equal(test_game.field, field2)
+    numpy.testing.assert_equal(test_game.chess_board.field, field2)
 
 
 def test_simple_eating():

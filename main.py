@@ -112,7 +112,7 @@ class InterfaceGame:
 def main():
     # you can set test_mode=False to see
     # the game between AIs while testing
-    # test.run_tests(test_mode=True)
+    test.run_tests(test_mode=True)
     interface_game = InterfaceGame()
     interface_game.play()
 
