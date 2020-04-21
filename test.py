@@ -3,6 +3,7 @@ import chessboard
 import game
 import numpy
 from datetime import datetime
+from draught import Draught
 
 
 def print_field(field):
@@ -31,12 +32,12 @@ def test_simple_eating():
     start_field = [
         [None, None, None, None],
         [None, None, None, None],
-        [None, draught.Draught(False), None, None],
-        [None, None, draught.Draught(True), None]
+        [None, Draught(False), None, None],
+        [None, None, Draught(True), None]
     ]
     expected_field = [
         [None, None, None, None],
-        [draught.Draught(True), None, None, None],
+        [Draught(True), None, None, None],
         [None, None, None, None],
         [None, None, None, None]
     ]
@@ -49,14 +50,14 @@ def test_try_not_to_die():
     # another one does not
     start_field = [
         [None, None, None, None],
-        [draught.Draught(False), None, None, None],
+        [Draught(False), None, None, None],
         [None, None, None, None],
-        [None, None, draught.Draught(True), None]
+        [None, None, Draught(True), None]
     ]
     expected_field = [
         [None, None, None, None],
-        [draught.Draught(False), None, None, None],
-        [None, None, None, draught.Draught(True)],
+        [Draught(False), None, None, None],
+        [None, None, None, Draught(True)],
         [None, None, None, None]
     ]
     general_test(start_field, expected_field)
@@ -69,17 +70,17 @@ def test_eat_two_not_one():
     start_field = [
         [None] * 6,
         [None] * 6,
-        [None, None, draught.Draught(False), None, None, None],
+        [None, None, Draught(False), None, None, None],
         [None] * 6,
-        [None, None, draught.Draught(False), None, draught.Draught(False), None],
-        [None, None, None, draught.Draught(True), None, None]
+        [None, None, Draught(False), None, Draught(False), None],
+        [None, None, None, Draught(True), None, None]
     ]
     expected_field = [
         [None] * 6,
-        [None, None, None, draught.Draught(True), None, None],
+        [None, None, None, Draught(True), None, None],
         [None] * 6,
         [None] * 6,
-        [None, None, None, None, draught.Draught(False), None],
+        [None, None, None, None, Draught(False), None],
         [None] * 6
     ]
     general_test(start_field, expected_field)
@@ -91,9 +92,9 @@ def test_long_eating():
     # through long distances, once they become kings
     start_field = [
         [None] * 6,
-        [None, draught.Draught(False), None, None, None, None],
-        [draught.Draught(True), None, None, None, draught.Draught(False), None],
-        [None, draught.Draught(False), None, None, None, None],
+        [None, Draught(False), None, None, None, None],
+        [Draught(True), None, None, None, Draught(False), None],
+        [None, Draught(False), None, None, None, None],
         [None] * 6,
         [None] * 6
     ]
@@ -101,7 +102,7 @@ def test_long_eating():
         [None] * 6,
         [None] * 6,
         [None] * 6,
-        [None, draught.Draught(False), None, None, None, draught.Draught(True, True)],
+        [None, Draught(False), None, None, None, Draught(True, True)],
         [None] * 6,
         [None] * 6
     ]
@@ -122,14 +123,13 @@ def test_multiple_complex_eating():
     # - - r - 4 - - -
     start_field = [
         [None] * 8,
-        [None, None, draught.Draught(False), None, None, None, draught.Draught(False), None],
-        [None, None, None, draught.Draught(False), None, draught.Draught(False), None, None],
-        [None, None, draught.Draught(False), None, None, None, None, None],
-        [None, None, None, draught.Draught(True), None, None, None, None],
-        [None, None, draught.Draught(False), None,
-         draught.Draught(False), None, draught.Draught(False), None],
+        [None, None, Draught(False), None, None, None, Draught(False), None],
+        [None, None, None, Draught(False), None, Draught(False), None, None],
+        [None, None, Draught(False), None, None, None, None, None],
+        [None, None, None, Draught(True), None, None, None, None],
+        [None, None, Draught(False), None, Draught(False), None, Draught(False), None],
         [None] * 8,
-        [None, None, draught.Draught(True), None, None, None, None, None]
+        [None, None, Draught(True), None, None, None, None, None]
     ]
     # gray draught is a 'neutral' draught,
     # just a wall, blocking a cell
@@ -140,8 +140,8 @@ def test_multiple_complex_eating():
         [None] * 8,
         [None] * 8,
         [None] * 8,
-        [None, None, None, draught.Draught(True, True), None, None, None, None],
-        [None, None, draught.Draught(True), None, None, None, None, None]
+        [None, None, None, Draught(True, True), None, None, None, None],
+        [None, None, Draught(True), None, None, None, None, None]
     ]
     general_test(start_field, expected_field)
     print('test \'multiple complex eating\' passed')

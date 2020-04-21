@@ -41,6 +41,9 @@ class Draught:
                     self.is_king == other.is_king)
         return False
 
+    def __hash__(self):
+        return hash(self.is_white, self.is_king)
+
     def enemies_on_the_way(self, start: Pos, finish: Pos, field) -> int:
         dir_x, dir_y = get_dirs(start, finish)
         pos = list(start)
@@ -88,7 +91,7 @@ class Draught:
     def is_valid_eating_step(self, start: Pos, finish: Pos, field: list):
         return self.is_valid_step(start, finish, field) & self.eats_one_enemy(start, finish, field)
 
-    def get_valid_steps(self, start: Pos, field) -> tuple:
+    def get_valid_steps(self, start: Pos, field) -> list:
         result = []
         for i in range(len(field)):
             j = start[1] + (start[0] - i)
@@ -97,14 +100,14 @@ class Draught:
             j = start[1] - (start[0] - i)
             if 0 <= j < len(field) and self.is_valid_step(start, (i, j), field):
                 result.append((i, j))
-        return tuple(result)
+        return result
 
-    def get_valid_eating_steps(self, start: Pos, field) -> tuple:
+    def get_valid_eating_steps(self, start: Pos, field) -> list:
         result = []
         for finish in self.get_valid_steps(start, field):
             if self.eats_one_enemy(start, finish, field):
                 result.append(finish)
-        return tuple(result)
+        return result
 
     def can_eat(self, start: Pos, field) -> bool:
         if not self.is_king:
@@ -117,7 +120,7 @@ class Draught:
                             return True
             return False
         else:
-            return self.get_valid_eating_steps(start, field) != ()
+            return self.get_valid_eating_steps(start, field) != []
 
     def get_score(self):
         return 3 if self.is_king else 1

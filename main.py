@@ -72,7 +72,7 @@ class InterfaceGame:
     def choose_difficulty(self):
         difficulty_types = ('easy', 'medium', 'hard')
         result = self.choose_parameters(difficulty_types, hint='Choose difficulty!')
-        return result + 4 if result != -1 else -1
+        return result + 3 if result != -1 else -1
 
     def choose_music(self):
         music_types = ('Green Day', 'Blink-182', 'I don\'t like music!')
@@ -112,7 +112,7 @@ class InterfaceGame:
 def main():
     # you can set test_mode=False to see
     # the game between AIs while testing
-    test.run_tests(test_mode=True)
+    # test.run_tests(test_mode=True)
     interface_game = InterfaceGame()
     interface_game.play()
 

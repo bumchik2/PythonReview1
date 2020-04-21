@@ -5,7 +5,9 @@ import copy
 import pickle
 import os
 from enum import Enum
-from draught import ColorType
+from draught import ColorType, Pos
+from typing import Tuple
+
 
 GRAY = (105, 105, 105)
 GREEN = (0, 200, 64)
@@ -19,7 +21,7 @@ class PlayerType(Enum):
     AI = 2
 
 
-def get_indexes(pos: tuple, cell_size: int) -> tuple:
+def get_indexes(pos: tuple, cell_size: int) -> draught.Pos:
     return pos[1] // cell_size, pos[0] // cell_size
 
 
@@ -99,10 +101,10 @@ class Game:
         self.can_change_draught = True
 
     def eating_draught_exists(self) -> bool:
-        for i in range(len(self.field)):
-            for j in range(len(self.field)):
-                if self.field[i][j] is not None and self.field[i][j].color_type == self.current_player_color_type:
-                    if self.field[i][j].can_eat((i, j), self.field):
+        for i, row in enumerate(self.field):
+            for j, dr in enumerate(row):
+                if dr is not None and dr.color_type == self.current_player_color_type:
+                    if dr.can_eat((i, j), self.field):
                         return True
         return False
 
@@ -112,42 +114,57 @@ class Game:
         self.set_choices_none()
         self.current_state = State.CHOOSING_DRAUGHT
 
+    def correct_draught_is_chosen(self):
+        if self.chosen_draught is None:
+            return False
+
+        if self.chosen_draught.color_type != self.current_player_color_type:
+            return False
+
+        return not self.eating_draught_exists() or self.chosen_draught.can_eat(self.chosen_draught_position, self.field)
+
     def player_choose_draught(self):
         if self.last_mouse_pos is not None:
             self.chosen_draught_position = get_indexes(self.last_mouse_pos, self.cell_size)
             self.chosen_draught = self.field[self.chosen_draught_position[0]][self.chosen_draught_position[1]]
             self.last_mouse_pos = None
-            if self.chosen_draught is not None and self.chosen_draught.color_type == self.current_player_color_type:
-                if not self.eating_draught_exists() or \
-                        self.chosen_draught.can_eat(self.chosen_draught_position, self.field):
-                    self.current_state = State.CHOOSING_TARGET
-            else:
-                self.set_choices_none()
+
+        if self.correct_draught_is_chosen():
+            self.current_state = State.CHOOSING_TARGET
+        else:
+            self.set_choices_none()
 
     def player_choose_target(self):
         if self.last_mouse_pos is not None:
             self.chosen_target_position = get_indexes(self.last_mouse_pos, self.cell_size)
-            just_ate_someone = False
             self.last_mouse_pos = None
-            if self.chosen_draught.can_eat(self.chosen_draught_position, self.field):
-                just_ate_someone = True
-                chosen_target_valid = self.chosen_draught.is_valid_eating_step(self.chosen_draught_position,
-                                                                               self.chosen_target_position, self.field)
-            else:
-                chosen_target_valid = self.chosen_draught.is_valid_step(self.chosen_draught_position,
-                                                                        self.chosen_target_position, self.field)
-            if not chosen_target_valid:
-                if self.can_change_draught:
-                    self.chosen_draught = None
-                    self.chosen_draught_position = None
-                    self.current_state = State.CHOOSING_DRAUGHT
-            else:
-                draught.move_draught(self.chosen_draught_position, self.chosen_target_position, self.field)
-                if just_ate_someone and self.chosen_draught.can_eat(self.chosen_target_position, self.field):
-                    self.chosen_draught_position = self.chosen_target_position
-                    self.can_change_draught = False
-                else:
-                    self.change_current_player()
+
+        if self.chosen_target_position is None:
+            return
+
+        just_ate_someone = False
+        if self.chosen_draught.can_eat(self.chosen_draught_position, self.field):
+            just_ate_someone = True
+            chosen_target_valid = self.chosen_draught.is_valid_eating_step(self.chosen_draught_position,
+                                                                           self.chosen_target_position, self.field)
+        else:
+            chosen_target_valid = self.chosen_draught.is_valid_step(self.chosen_draught_position,
+                                                                    self.chosen_target_position, self.field)
+
+        if not chosen_target_valid:
+            if self.can_change_draught:
+                self.chosen_draught = None
+                self.chosen_draught_position = None
+                self.current_state = State.CHOOSING_DRAUGHT
+            return
+
+        draught.move_draught(self.chosen_draught_position, self.chosen_target_position, self.field)
+        if just_ate_someone and self.chosen_draught.can_eat(self.chosen_target_position, self.field):
+            # in this case we have to make one more step
+            self.chosen_draught_position = self.chosen_target_position
+            self.can_change_draught = False
+        else:
+            self.change_current_player()
 
     def make_step_player(self):
         if self.current_state == State.CHOOSING_DRAUGHT:
@@ -159,30 +176,31 @@ class Game:
 
     def score(self) -> int:
         result = 0
-        for i in range(len(self.field)):
-            for j in range(len(self.field)):
-                if self.field[i][j] is not None:
-                    if self.field[i][j].color_type == self.current_player_color_type:
-                        result += self.field[i][j].get_score()
+        for i, row in enumerate(self.field):
+            for j, dr in enumerate(row):
+                if dr is not None:
+                    if dr.color_type == self.current_player_color_type:
+                        result += dr.get_score()
                     else:
-                        result -= self.field[i][j].get_score()
+                        result -= dr.get_score()
         return result
 
-    def get_possible_steps(self) -> tuple:
+    def get_possible_steps(self) -> list:
         result = []
         need_to_find_eating_draught = self.eating_draught_exists()
-        for i in range(len(self.field)):
-            for j in range(len(self.field)):
-                if self.field[i][j] is not None and self.field[i][j].color_type == self.current_player_color_type:
+        for i, row in enumerate(self.field):
+            for j, dr in enumerate(row):
+                if dr is not None and dr.color_type == self.current_player_color_type:
                     if need_to_find_eating_draught:
-                        possible_finishes = self.field[i][j].get_valid_eating_steps((i, j), self.field)
+                        possible_finishes = dr.get_valid_eating_steps((i, j), self.field)
                     else:
-                        possible_finishes = self.field[i][j].get_valid_steps((i, j), self.field)
+                        possible_finishes = dr.get_valid_steps((i, j), self.field)
                     for finish in possible_finishes:
                         result.append(((i, j), finish))
-        return tuple(result)
+        return result
 
-    def best_step(self, depth: int, starting_pos: draught.Pos) -> draught.Pos:
+    def best_step(self, depth: int, starting_pos: Pos) -> Tuple[Pos, Pos, int]:
+        #
         if depth == 0:
             return None, None, self.score()
         if starting_pos != ():
@@ -191,7 +209,7 @@ class Game:
                                                                                                         self.field)])
         else:
             possible_steps = self.get_possible_steps()
-        if possible_steps == ():
+        if not possible_steps:
             return None, None, self.score()
 
         best_step_so_far = (None, None, -1000)
@@ -225,13 +243,15 @@ class Game:
 
         return best_step_so_far
 
-    def make_step_ai(self, starting_pos: draught.Pos):
-        if self.get_possible_steps() == ():
+    def make_step_ai(self, starting_pos: Pos):
+        if not self.get_possible_steps():
             print('Game Over!')
             return
         players_copy = self.players.copy()
         self.players = [PlayerType.AI, PlayerType.AI]
+
         start_finish_score = self.best_step(self.difficulty, starting_pos)
+
         one_eaten = self.field[start_finish_score[0][0]][start_finish_score[0][1]].eats_one_enemy(
             start_finish_score[0], start_finish_score[1], self.field)
         draught.move_draught(start_finish_score[0], start_finish_score[1], self.field)
@@ -240,6 +260,7 @@ class Game:
             self.make_step_ai(start_finish_score[1])
         else:
             self.change_current_player()
+
         self.players = players_copy
         self.ai_step_number += 1
 
@@ -278,13 +299,14 @@ class Game:
     def get_game_over_message(self):
         white_draughts_exist = False
         black_draughts_exits = False
-        for i in range(len(self.field)):
-            for j in range(len(self.field)):
-                if self.field[i][j] is not None:
-                    if self.field[i][j].color_type == draught.ColorType.WHITE:
+        for i, row in enumerate(self.field):
+            for j, dr in enumerate(row):
+                if dr is not None:
+                    if dr.color_type == draught.ColorType.WHITE:
                         white_draughts_exist = True
                     else:
                         black_draughts_exits = True
+
         if white_draughts_exist and black_draughts_exits:
             return 'Draw!'
         else:
@@ -336,7 +358,7 @@ class Game:
             else:
                 raise Exception('unknown player')
 
-            if self.get_possible_steps() == ():
+            if not self.get_possible_steps():
                 running = False
 
             if not self.test_mode:
